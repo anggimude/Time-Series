@@ -1,0 +1,283 @@
+---
+title: "STA457-Assignment 1"
+author:
+  - Hyuk Jang
+format: pdf
+thanks: "https://github.com/anggimude/Time-Series.git"
+---
+
+```{r}
+#| message: false
+#| warning: false
+
+# Code Space Setup
+library(ggplot2)
+library(tidyverse)
+library(astsa)
+library(forecast)
+eccm <- read_csv("~/sta457assignment1/E-Commerce.csv")
+AUS<- read_csv("~/sta457assignment1/AUS.csv")
+
+```
+
+# Q2(a)
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Observed and fitted plot of ETS model"
+#| label: "fig-etsann"
+
+# Q2(a)
+# Create a quarterly time series
+aus_ts <- ts(AUS$Value, start = c(2005, 1), frequency = 4)
+
+# Fit a ETS model
+aus_etsann <- ets(aus_ts, model = "ANN")
+
+# Extract fitted values from the model
+fitted_vals <- fitted(aus_etsann)
+
+
+# Convert the time series and fitted values for a ggplot
+time_vals <- time(aus_ts)
+plot_df <- data.frame(
+  Time = as.numeric(time_vals),
+  Observed = as.numeric(aus_ts),
+  Fitted = as.numeric(fitted_vals)
+)
+
+# Create the plot
+graph1 <- ggplot(plot_df, aes(x = Time)) +
+  geom_line(aes(y = Observed, color = "Observed"), size = 1) +
+  geom_line(aes(y = Fitted, color = "Fitted"), size = 1) +
+  scale_color_manual(values = c("Observed" = "black", "Fitted" = "red")) +
+  labs(title = "Observed vs Fitted Values",
+       x = "Year",
+       y = "Value",
+       color = "Legend") +
+  theme_minimal()
+
+print(graph1)
+```
+
+# Q2(b)
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Plot of Residuals"
+#| label: "fig-etsres"
+
+# Q2(b)
+# Calculate the residuals from the ETS model
+aus_resid <- residuals(aus_etsann)
+
+# Create a data frame for residuals
+resid_df <- data.frame(
+  Time = as.numeric(time(aus_resid)),
+  Residuals = as.numeric(aus_resid)
+)
+
+# Plot the residuals
+graph2 <- ggplot(resid_df, aes(x = Time, y = Residuals)) +
+  geom_line(color = "blue", size = 1) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red", size = 1) +
+  labs(title = "Residuals from ETS(A,N,N) Model",
+       x = "Year",
+       y = "Residuals") +
+  theme_minimal()
+
+
+print(graph2)
+```
+@fig-etsres and @fig-etsann suggest that the model has some flaws in fitting the model. A well-fitted model generally exhibits randomly scattered residuals around zero, and no obvious trend. However, as we are able to observe in @fig-etsres, our data shows a clear periodic pattern and is not randomly scattered implying it may not be the best model to fit this data.
+
+# Q2(c)
+```{r}
+#| message: false
+#| warning: false
+
+# Q2(c)
+aus_etsaaa <- ets(aus_ts, model = "AAA")
+
+# Extract fitted values
+fitted_vals_aaa <- fitted(aus_etsaaa)
+
+# Create a data frame for plotting
+plot_df_aaa <- data.frame(
+  Time = as.numeric(time(aus_ts)),
+  Observed = as.numeric(aus_ts),
+  Fitted   = as.numeric(fitted_vals_aaa)
+)
+
+# Plot observed values and fitted values
+graph3 <- ggplot(plot_df_aaa, aes(x = Time)) +
+  geom_line(aes(y = Observed, color = "Observed"), size = 1) +
+  geom_line(aes(y = Fitted, color = "Fitted (Holt-Winters)"), size = 1) +
+  scale_color_manual(values = c("Observed" = "red", "Fitted (Holt-Winters)" = "blue")) +
+  labs(title = "Observed vs Fitted Values: ETS(A,A,A)",
+       x = "Year",
+       y = "Value",
+       color = "Legend") +
+  theme_minimal()
+
+print(graph3)
+```
+
+# Q2(d)
+```{r}
+#| message: false
+#| warning: false
+
+# Q2(d)-1
+# Plot the ETS decomposition
+plot(aus_etsaaa)
+```
+
+```{r}
+#| message: false
+#| warning: false
+
+# Q2(d)-2
+# Extract the fitted smoothing parameters
+params <- aus_etsaaa$par
+cat("Estimated Smoothing Parameters (alpha, beta, gamma):\n")
+print(params)
+
+```
+$\alpha$ = 0.35988,
+$\beta$ = 0.074,
+$\gamma$ = 0.64.
+
+# Q2(e)
+```{r}
+#| message: false
+#| warning: false
+
+# Q2(e)
+# Forecast two years ahead
+aus_etsaaafc <- forecast(aus_etsaaa, h = 8)
+
+# Plot the forecast along with the original data and the 80%/95% confidence intervals
+plot(aus_etsaaafc, 
+     main = "Forecast from ETS(A,A,A) Model (2-Years)",
+     xlab = "Year", 
+     ylab = "Value")
+
+```
+
+\newpage
+
+# Q3(a)
+```{r}
+#| message: false
+#| warning: false
+
+# Q3(a)
+# Load varve
+data(varve) 
+
+# Determine the length of the series
+n <- length(varve)
+
+# Split the data
+first_half <- varve[1:(n/2)]
+second_half <- varve[(n/2 + 1):n]
+
+# Compute the sample variances
+var_first <- var(first_half)
+var_second <- var(second_half)
+
+# Print the results
+cat("Sample variance of the first half:", var_first, "\n")
+cat("Sample variance of the second half:", var_second, "\n")
+
+
+```
+From the results of the code, we can observe that the first half has a variance of 133.5 while the second half has a variance of 594.5. This significant difference in variances implies that the time series varve exhibits heteroskedasticity.
+
+# Q3(b)
+```{r}
+#| message: false
+#| warning: false
+
+# Q3(b)
+# Do the log transformation
+y <- log(varve)
+
+# Plot the trajectory 
+plot(y, type = "l",
+     main = "Log-transformed Varve Data",
+     xlab = "Time Index",
+     ylab = "log(Varve)")
+
+```
+The trajectory of the transformed series seems to be more stable than the original series because we are able to observe the less extreme fluctuations; the data is more well-fit with its trend. Though there exists a large spike; compared to the heteroskedasticity observed from part(a), it is much smaller implying the transformation has stabilized the variance. 
+
+# Q3(c)
+```{r}
+#| message: false
+#| warning: false
+
+# Q3(c)
+# Plot the sample ACF 
+acf(y, main = "ACF of Log-transformed Varve Data")
+```
+The plot suggests that the ACF drops gradually conveying there is a moderate level of autocorrelation between the observations. In addition, the decay of the ACF is not rapid and most lags have an autocorrelation above the threshold. These characteristics of the ACF plot is similar to a long-memory process. Thus, the log transformation seems to have stabilized the variance over time but there still persists long-term dependencies, not fully eliminating autocorrelations. 
+
+# Q3(d)
+```{r}
+#| message: false
+#| warning: false
+
+# Q3(d)
+# Compute the first-order differences
+z <- diff(y)
+
+# Plot z_t
+plot(z, type = "l",
+     main = "Trajectory of First-Order Differenced Series (z_t)",
+     xlab = "Time Index",
+     ylab = expression(z[t]))
+```
+
+# Q3(e)
+```{r}
+#| message: false
+#| warning: false
+
+# Q3(e)
+# Plot a histogram of z_t
+hist(z, breaks = 20, col = "lightblue", border = "black",
+     main = "Histogram of First-Order Differenced Series (z_t)",
+     xlab = expression(z[t]))
+```
+
+```{r}
+#| message: false
+#| warning: false
+
+# Q3(e)-1
+# Plot the sample ACF of z_t
+acf(z, main = "ACF of First-Order Differenced Series (z_t)")
+
+```
+
+The histogram shows that $z_t$ is normally distributed around the mean 0. In addition, the distribution is symmetric and with a relatively small spread, recommends $z_t$ is stationary after differencing. The ACF plot shows a steep drop to near 0 after the first lag implying the dependencies in the original series have been removed which stabilizes the mean and variance. Thus, these characteristics indicates the differenced series $z_t$ is stationary. 
+
+\newpage
+# Q4
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+library(knitr)
+knitr::include_graphics("~/sta457assignment1/sta457q4.jpeg")
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+library(knitr)
+knitr::include_graphics("~/sta457assignment1/sta457q4-1.jpeg")
+```
