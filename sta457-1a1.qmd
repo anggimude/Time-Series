@@ -3,7 +3,7 @@ title: "STA457-Assignment 1"
 author:
   - Hyuk Jang
 format: pdf
-thanks: "https://github.com/anggimude/Time-Series.git"
+thanks: "https://github.com/anggimude/Time-Series"
 ---
 
 ```{r}
