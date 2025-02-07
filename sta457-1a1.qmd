@@ -3,7 +3,7 @@ title: "STA457-Assignment 1"
 author:
   - Hyuk Jang
 format: pdf
-thanks: "https://github.com/anggimude/Time-Series"
+thanks: "If there are any issues please check: https://github.com/anggimude/Time-Series"
 ---
 
 ```{r}
@@ -15,6 +15,7 @@ library(ggplot2)
 library(tidyverse)
 library(astsa)
 library(forecast)
+library(knitr)
 eccm <- read_csv("~/sta457assignment1/E-Commerce.csv")
 AUS<- read_csv("~/sta457assignment1/AUS.csv")
 
